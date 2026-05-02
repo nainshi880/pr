@@ -27,6 +27,7 @@ fn main() {
         "list" => list_notes(),
         "view" => view_note(&args),
         "delete" => delete_note(&args),
+        "update" => update_note(&args),
         "help" | "-h" | "--help" => {
             print_usage();
             Ok(())
@@ -52,6 +53,7 @@ fn print_usage() {
     println!("  cargo run -- list");
     println!("  cargo run -- view <id>");
     println!("  cargo run -- delete <id>");
+    println!("  cargo run -- update <id> <title> <content>");
 }
 
 fn add_note(args: &[String]) -> Result<(), String> {
@@ -139,6 +141,31 @@ fn delete_note(args: &[String]) -> Result<(), String> {
     save_notes(&notes)?;
     println!("Deleted note {}", id);
     Ok(())
+}
+
+fn update_note(args : &[String]) -> Result<(), String>{
+    if args.len() < 5 {
+        return Err("Update requires <id> <new name> <description>".to_string());
+    }
+    let id = parse_id(&args[2])?;
+    let mut notes = load_notes()?;
+
+    let note = notes.iter_mut().find(|n| n.id == id).ok_or_else(|| "Error id not found".to_string())?;
+
+    let title : String = args[3].trim().to_string();
+
+    let content : String = args[4..].join(" ").trim().to_string();
+
+    note.title = title;
+    note.content = content;
+    note.created_at = current_timestamp()?;
+
+    save_notes(&notes)?;
+
+    println!("Note with Id {} was updated",id);
+
+    Ok(())
+
 }
 
 fn parse_id(input: &str) -> Result<u64, String> {
